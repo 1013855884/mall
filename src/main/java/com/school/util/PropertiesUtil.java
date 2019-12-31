@@ -13,6 +13,7 @@ public class PropertiesUtil {
 
     private static Properties props;
 
+
     static {
         String fileName = "mall.properties";
         props = new Properties();
