@@ -1,5 +1,6 @@
 package com.school.service.Impl;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.school.common.Const;
 import com.school.common.ResponseCode;
@@ -27,6 +28,13 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CartMapper cartMapper;
 
+    /**
+     * 添加购物车
+     * @param userId
+     * @param productId
+     * @param count
+     * @return
+     */
     public ServerResponse<CartVO> add(Integer userId,Integer productId,Integer count){
         if (productId == null || count == null){
             return ServerResponse.createByErrorStatusMessage(ResponseCode.ILLEGAL_ARGUMENT.getStatus(),ResponseCode.ILLEGAL_ARGUMENT.getMessage());
@@ -51,6 +59,81 @@ public class CartServiceImpl implements CartService {
     }
 
 
+
+    /**
+     * 更新购物车
+     * @param userId
+     * @param productId
+     * @param count
+     * @return
+     */
+    public ServerResponse<CartVO> update(Integer userId,Integer productId,Integer count){
+        if(productId == null || count == null){
+            return ServerResponse.createByErrorStatusMessage(ResponseCode.ILLEGAL_ARGUMENT.getStatus(),ResponseCode.ILLEGAL_ARGUMENT.getMessage());
+        }
+        Cart cart = cartMapper.selectCartByUserIdProductId(userId,productId);
+        if(cart != null){
+            cart.setQuantity(count);
+        }
+        cartMapper.updateByPrimaryKey(cart);
+        return this.list(userId);
+    }
+
+    /**
+     * 删除商品
+     * @param userId
+     * @param productIds
+     * @return
+     */
+    public ServerResponse<CartVO> deleteProduct(Integer userId,String productIds){
+        List<String> productList = Splitter.on(",").splitToList(productIds);
+        if(CollectionUtils.isEmpty(productList)){
+            return ServerResponse.createByErrorStatusMessage(ResponseCode.ILLEGAL_ARGUMENT.getStatus(),ResponseCode.ILLEGAL_ARGUMENT.getMessage());
+        }
+        cartMapper.deleteByUserIdProductIds(userId,productList);
+        return this.list(userId);
+    }
+
+    /**
+     * 购物车列表
+     * @param userId
+     * @return
+     */
+    public ServerResponse<CartVO> list (Integer userId){
+        CartVO cartVO = this.getCartVOLimit(userId);
+        return ServerResponse.createBySuccessMessage(cartVO);
+    }
+
+    /**
+     * 选中或者取消选中
+     * @param userId
+     * @param productId
+     * @param checked
+     * @return
+     */
+    public ServerResponse<CartVO> selectOrUnSelect (Integer userId,Integer productId,Integer checked){
+        cartMapper.checkedOrUncheckedProduct(userId,productId,checked);
+        return this.list(userId);
+    }
+
+    /**
+     * 获取购物车中商品数量
+     * @param userId
+     * @return
+     */
+    public ServerResponse<Integer> getCartProductCount(Integer userId){
+        if(userId == null){
+            return ServerResponse.createBySuccessMessage(0);
+        }
+        return ServerResponse.createBySuccessMessage(cartMapper.selectCartProductCount(userId));
+    }
+
+
+    /**
+     *
+     * @param userId
+     * @return
+     */
     public CartVO getCartVOLimit(Integer userId){
         CartVO cartVO = new CartVO();
         List<Cart> cartList = cartMapper.selectCartByUserId(userId);
@@ -107,6 +190,11 @@ public class CartServiceImpl implements CartService {
         return cartVO;
     }
 
+    /**
+     * 获取全选状态
+     * @param userId
+     * @return
+     */
     private boolean getAllCheckedStatus(Integer userId){
         if (userId == null){
             return false;

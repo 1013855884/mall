@@ -236,8 +236,9 @@ public class ProductServiceImpl implements ProductService {
         }
         List<Integer> categoryIdList = Lists.newArrayList();
         if (categoryId != null) {
+            System.out.println(categoryId);
             Category category = categoryMapper.selectByPrimaryKey(categoryId);
-            if (category == null) {
+            if (category == null && StringUtils.isBlank(keyword)) {
                 //没有该分类，并且还没有关键字，这个时候返回一个空结果集，不报错
                 PageHelper.startPage(pageNum, pageSize);
                 List<ProductListVO> productListVOList = Lists.newArrayList();
